@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<FrameLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent">
+    <SurfaceView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/preview"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+</SurfaceView>
+    <LinearLayout 
+        android:id="@+id/linearLayout1" 
+        android:layout_width="wrap_content" 
+        android:layout_height="wrap_content">
+        <Button 
+            android:text="Stop" 
+            android:id="@+id/stop" 
+            android:layout_width="wrap_content" 
+            android:layout_height="wrap_content"
+            android:onClick="stopWatching">
+        </Button>
+        <SeekBar
+            android:id="@+id/sensitivity" 
+            android:layout_width="400dp" 
+            android:layout_height="wrap_content"
+            android:max="90"
+            android:paddingTop="6dp"
+            android:paddingLeft="12dp">
+        </SeekBar>
+    </LinearLayout>
+</FrameLayout>
