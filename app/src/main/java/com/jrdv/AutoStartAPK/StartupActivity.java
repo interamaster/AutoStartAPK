@@ -7,6 +7,8 @@ import android.os.Bundle;
 
 
 //v0.1 compilado  para android studio ok de github:https://github.com/mienaikoe/DeltaMonitor
+//v02 ya enciendo pantalla e inicia hangout
+
 
 
 public class StartupActivity extends Activity {
@@ -22,6 +24,7 @@ public class StartupActivity extends Activity {
 
         Intent intent = new Intent(StartupActivity.this, CameraWatcherService.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(CameraWatcherService.EXTRA_MESSAGE,"DesdeMain");
         startService(intent);
         
         finish();

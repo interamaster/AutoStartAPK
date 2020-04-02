@@ -8,26 +8,38 @@ package com.jrdv.AutoStartAPK;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import android.app.Service;
 import android.app.TaskStackBuilder;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+
 import static android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
+
+import android.hardware.display.DisplayManager;
 import android.opengl.GLES20;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.view.Display;
 import android.widget.Toast;
 
 import com.jwetherell.motion_detection.detection.RgbMotionDetection;
 import com.jwetherell.motion_detection.image.ImageProcessing;
 
 
-//v0.1 compilado  para android studio ok de github:https://github.com/mienaikoe/DeltaMonitor
+//v0.1 compilado  para android studio ok de github:https://github.com/mienaikoe/DeltaMonitor 3
+
 
 
 
@@ -46,7 +58,23 @@ public class CameraWatcherService extends Service {
     private RgbMotionDetection detector = null;
     private NotificationManager notifier;
 
+
+    //para el intnt Extra info
+
+    public static final String  EXTRA_MESSAGE="mensaje";
+    private BroadcastReceiver mReceiver;
+
+    private boolean checkhaygente =false;
+    private Context mcontext;
+
+
+
+
+
     public Camera getCamera() {
+
+
+
         return camera;
     }
 
@@ -59,20 +87,143 @@ public class CameraWatcherService extends Service {
 
     @Override
     public void onCreate() {
+
+        mcontext=this;
+
         detector = new RgbMotionDetection();
 
         notifyMessage("DeltaMonitor Running","Touch to Preview Camera");
         
         try{
             super.onCreate();
-            startRecording();
+
+
+            //startRecording();TODO garbara cuando se apague pantalla
+
+
+
         } catch(Exception ex){
             Toast.makeText(getBaseContext(), ex.getMessage(), Toast.LENGTH_SHORT).show();
             onDestroy();
         }
+
+
+        // REGISTER RECEIVER THAT HANDLES SCREEN ON AND SCREEN OFF LOGIC
+        //NO CREO Q SEA NECESARIO LA TENRELO EN MANIFEST!!!NO!!! SI LO QUITO NO FUNCIONA!!
+
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+          mReceiver = new ScreenReceiver();
+        registerReceiver(mReceiver, filter);
+
+
     }
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////METODO QUE SE EJECUTA CADA VEZ QUE SE RELANZA ESTE SERVICE//////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // TODO OJO ESTE METODO SE EJECUTA CADA VEZ QUE SE LANZA UN INTENT DE ESTE SERVICE
+        //SI YA ESTABA CREADO!!!
+        //ASI QUE ES LA MEJO MANERA DE ACTUALIZAR LA INFO!!
+
+        //ej leer el extra del intent:
+
+
+        Log.d("INFO", "REINICIADO onStartCommand EN SERVICE!!");
+
+
+        if (intent == null) {
+
+            //esto solo debe suceder al removeontask o al destroyed el service!!
+            //pero ninguno de los 2 metodos que lo deberian detectar o hace...
+
+
+        }
+
+
+        if (intent != null) {
+
+
+            Log.d("INFO", "intent not null  onStartCommand EN SERVICE!!" + intent.getStringExtra(EXTRA_MESSAGE));
+
+            //1º)sacamos los valores de EXTRA_TIME y EXTRA_MSG
+
+            String intentExtra = intent.getStringExtra(EXTRA_MESSAGE);
+            Log.v("TASK", "El mensaje recibido en LockService: " + intentExtra);
+
+
+            //2º)chequeamos si es un intent de pantalla
+            if (intentExtra != null && intentExtra.equals("screen_state")) {
+
+
+                boolean screenOn = intent.getBooleanExtra("screen_state", true);
+
+                if (!screenOn) {
+                    // YOUR CODE
+                    Log.e("PANTALLA ENCENDIDA ", String.valueOf(screenOn));
+
+                    // si encendemos pantalla dejamos de monitorizar
+                    checkhaygente =false;
+
+
+                    stopRecording();
+
+
+                    //chequeamos cada 5 min que siga habiendo gente
+                    Timer timer = new Timer();
+                    timer.scheduleAtFixedRate(new TimerTask() {
+
+                        @Override
+                        public void run() {
+                            //Do something
+
+                           //si l pnatalla esta encendida solo!!!
+
+
+
+                            if (isScreenOn(mcontext)) {
+
+                                Log.e("PANTALLA ENCENDIDA CHEQUEO GENTE","ok");
+                                checkhaygente =true;
+
+                                startRecording();
+                            }
+
+
+                        }
+                    }, 0, 50000);;
+
+
+                } else {
+                    // YOUR CODE
+                    Log.e("PANTALLA APAGADA ", String.valueOf(screenOn));
+
+                    // si apagamos  pantalla empezamos de monitorizar
+
+                    startRecording();
+
+
+                }
+            }
+
+        }
+
+
+        return Service.START_STICKY;
+    }
+
+
+
+
+
+
+ @Override
     public void onDestroy() {
         Log.w(TAG, "============Destroying CameraWatcherService");
         stopRecording();
@@ -80,13 +231,26 @@ public class CameraWatcherService extends Service {
             camera.release();
         }
         notifier.cancel(NOTIFICATION_ID);
+
+
+        //dreregistarmos el screen receiver
+
+     unregisterReceiver(mReceiver);
+
         super.onDestroy();
     }
 
     public void startRecording() {
         if (camera == null) {
             try {
-                camera = Camera.open();
+                //camera = Camera.open();
+
+                Log.d("INFO numero de camaras", String.valueOf(Camera.getNumberOfCameras()));///2
+
+                //abrimos la frontal
+
+                camera = Camera.open(1);
+
             } catch (Exception ex) {
                 Log.e(TAG, ex.getMessage());
                 ex.printStackTrace();
@@ -132,6 +296,9 @@ public class CameraWatcherService extends Service {
                 camera.setPreviewTexture(null);
             }
             texture = null; //TODO: This is a patch for a bug (SurfaceTexture has been abandoned)
+
+
+            Log.i(TAG, "==================Stopping to Record");
         } catch (IOException ex) {
             Log.e(TAG, "IOException during recording setdown " + ex.getMessage());
             ex.printStackTrace();
@@ -154,10 +321,35 @@ public class CameraWatcherService extends Service {
             int[] img = ImageProcessing.decodeYUV420SPtoRGB(buffer, size.width, size.height);
             if (img != null && detector.detect(img, size.width, size.height)) {
                 Log.i(TAG, "======================================= Motion Detected");
-                stopRecording();
+                //stopRecording();
+
+                //aqui habria que detecatr si encendemos la pantalla o seguimos detectadnod
+
+                //startRecording();
+
+                if (!checkhaygente) {
+
+
+                    empiezaAPKelegida();
+                }
+
+                else {
+
+
+                    checkhaygente = false;
+                }
+
+
+
+
+
+                /*
+                //no quiero que me haga eso de momento
                 Intent intent = new Intent(CameraWatcherService.this, MotionDetectionActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
+                */
+
             } else {
                 camera.addCallbackBuffer(buffer);
                 if (!toastPopped) {
@@ -167,6 +359,32 @@ public class CameraWatcherService extends Service {
             }
         }
     };
+
+    private void empiezaAPKelegida() {
+
+        //encndemos pantalla
+
+
+
+        //enciende pero en lockscreen..solucion:quitamos el lock screen!!!
+
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
+                | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CHESS");
+        wl.acquire();
+
+
+
+
+
+
+        //lanzamos apk
+
+
+        Intent launchIntent = getPackageManager().getLaunchIntentForPackage("com.google.android.talk");
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity( launchIntent );
+    }
 
     public class CameraWatcherServiceBinder extends Binder {
 
@@ -225,5 +443,73 @@ public class CameraWatcherService extends Service {
         }
         notifier.notify(NOTIFICATION_ID, mBuilder.build());
     }
+
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+    /**
+     * Is the screen of the device on.
+     * @param context the context
+     * @return true when (at least one) screen is on
+     */
+    public boolean isScreenOn(Context context) {
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            DisplayManager dm = (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
+            boolean screenOn = false;
+            for (Display display : dm.getDisplays()) {
+
+
+                //   Log.i("***ESTADO DEL SCREEN:", String.valueOf(display.getState()));
+
+                /*
+                OJO CON AOD EL ESTADO ES 3 O 4
+                https://developer.android.com/reference/android/view/Display.html#STATE_OFF
+
+STATE_DOZE
+added in API level 21
+public static final int STATE_DOZE
+Display state: The display is dozing in a low power state; it is still on but is optimized for showing system-provided content while the device is non-interactive.
+
+See also:
+
+getState()
+PowerManager.isInteractive()
+Constant Value: 3 (0x00000003)
+
+STATE_DOZE_SUSPEND
+added in API level 21
+public static final int STATE_DOZE_SUSPEND
+Display state: The display is dozing in a suspended low power state; it is still on but the CPU is not updating it. This may be used in one of two ways: to show static system-provided content while the device is non-interactive, or to allow a "Sidekick" compute resource to update the display. For this reason, the CPU must not control the display in this mode.
+
+See also:
+
+getState()
+PowerManager.isInteractive()
+Constant Value: 4 (0x00000004
+
+                 */
+                if (display.getState() != Display.STATE_OFF && display.getState() != Display.STATE_DOZE  && display.getState() != Display.STATE_DOZE_SUSPEND) {
+                    screenOn = true;
+                }
+            }
+
+
+            //  Log.i("***DEVUELVO  SCREEN:", String.valueOf(screenOn));
+
+            return screenOn;
+        } else {
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            //noinspection deprecation
+            return pm.isScreenOn();
+        }
+    }
+
+
 
 }
