@@ -8,6 +8,7 @@ import android.os.Bundle;
 
 //v0.1 compilado  para android studio ok de github:https://github.com/mienaikoe/DeltaMonitor
 //v02 ya enciendo pantalla e inicia hangout
+//v03 funciona timer ok pero el wlrelase no lo hace bien..
 
 
 

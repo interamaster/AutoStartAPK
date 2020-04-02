@@ -66,7 +66,13 @@ public class CameraWatcherService extends Service {
 
     private boolean checkhaygente =false;
     private Context mcontext;
+    private   Timer timer = new Timer();
 
+
+    private int numdetecciones=1;
+
+    private   PowerManager.WakeLock wl;
+    private PowerManager pm;
 
 
 
@@ -87,6 +93,17 @@ public class CameraWatcherService extends Service {
 
     @Override
     public void onCreate() {
+
+          pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+          wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
+                | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CHESS");
+
+
+
+        numdetecciones=1;
+
+        Log.i(TAG, "===========================oncreate numdetecciones:"+numdetecciones);
+
 
         mcontext=this;
 
@@ -176,7 +193,7 @@ public class CameraWatcherService extends Service {
 
 
                     //chequeamos cada 5 min que siga habiendo gente
-                    Timer timer = new Timer();
+                    timer = new Timer();
                     timer.scheduleAtFixedRate(new TimerTask() {
 
                         @Override
@@ -189,15 +206,61 @@ public class CameraWatcherService extends Service {
 
                             if (isScreenOn(mcontext)) {
 
-                                Log.e("PANTALLA ENCENDIDA CHEQUEO GENTE","ok");
+                                Log.e("PANTALLA ENCENDIDA"," CHEQUEO GENTE ok");
                                 checkhaygente =true;
 
-                                startRecording();
+                                numdetecciones--;
+                                Log.i(TAG, "==============================timer de gente vencido resto 1 numdetecciones:"+numdetecciones);
+
+                                if (numdetecciones>=1){
+
+                                    startRecording();
+                                }
+
+                                else {
+
+                                    //no ha detectado a nadie 2 veces seguidas... anulo y apago
+
+
+
+                                   // PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                                  //  PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
+                                       //     | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CHESS");
+                                    wl.release();
+
+                                    checkhaygente=false;
+
+
+                                    if (timer != null){
+                                         timer.cancel();
+                                         timer=null; }
+
+
+
+
+
+                                }
+
+                            }
+
+                            else {
+
+                                if (timer != null){
+
+
+
+                                timer.cancel();
+
+                                    timer=null;
+
+                                }
+
+
                             }
 
 
                         }
-                    }, 0, 50000);;
+                    }, 0, 20000);;//TODO timepo del timer en que chequea si hay gente
 
 
                 } else {
@@ -205,6 +268,16 @@ public class CameraWatcherService extends Service {
                     Log.e("PANTALLA APAGADA ", String.valueOf(screenOn));
 
                     // si apagamos  pantalla empezamos de monitorizar
+
+
+                    if (timer != null){
+
+
+
+                        timer.cancel();
+
+                        timer=null;
+                    }
 
                     startRecording();
 
@@ -321,6 +394,13 @@ public class CameraWatcherService extends Service {
             int[] img = ImageProcessing.decodeYUV420SPtoRGB(buffer, size.width, size.height);
             if (img != null && detector.detect(img, size.width, size.height)) {
                 Log.i(TAG, "======================================= Motion Detected");
+
+
+                //aumentamos num de de
+
+
+                numdetecciones++;
+                Log.i(TAG, "======================================= numdetecciones:"+numdetecciones);
                 //stopRecording();
 
                 //aqui habria que detecatr si encendemos la pantalla o seguimos detectadnod
@@ -330,6 +410,8 @@ public class CameraWatcherService extends Service {
                 if (!checkhaygente) {
 
 
+                    //numdetecciones=0;
+                    Log.i(TAG, "==============================empiezza apk primera vez numdetecciones:"+numdetecciones);
                     empiezaAPKelegida();
                 }
 
@@ -337,6 +419,9 @@ public class CameraWatcherService extends Service {
 
 
                     checkhaygente = false;
+
+
+                    stopRecording();
                 }
 
 
@@ -368,9 +453,9 @@ public class CameraWatcherService extends Service {
 
         //enciende pero en lockscreen..solucion:quitamos el lock screen!!!
 
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
-                | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CHESS");
+       // PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+       // PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
+              //  | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CHESS");
         wl.acquire();
 
 
