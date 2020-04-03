@@ -20,6 +20,13 @@
             android:layout_height="wrap_content"
             android:onClick="stopWatching">
         </Button>
+        <Button
+            android:text="Choose APK"
+            android:id="@+id/chooseapk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="chooseapk">
+        </Button>
         <SeekBar
             android:id="@+id/sensitivity" 
             android:layout_width="400dp" 

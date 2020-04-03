@@ -74,6 +74,7 @@ public class CameraWatcherService extends Service {
     private   PowerManager.WakeLock wl;
     private PowerManager pm;
 
+    long tiempoAutocheckpeople=20000;//10 min=60*1000*10
 
 
 
@@ -260,7 +261,7 @@ public class CameraWatcherService extends Service {
 
 
                         }
-                    }, 0, 20000);;//TODO timepo del timer en que chequea si hay gente
+                    }, 0, tiempoAutocheckpeople);;//TODO timepo del timer en que chequea si hay gente
 
 
                 } else {

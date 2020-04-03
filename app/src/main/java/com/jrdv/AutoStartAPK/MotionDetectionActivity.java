@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.hardware.Camera;
 import android.os.Bundle;
@@ -15,6 +16,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.SeekBar;
+import android.widget.Toast;
+
 import com.jrdv.AutoStartAPK.CameraWatcherService.CameraWatcherServiceBinder;
 import java.io.IOException;
 
@@ -56,6 +59,7 @@ public class MotionDetectionActivity extends Activity{
         Intent bindingIntent = new Intent(this, CameraWatcherService.class);        
         bindService(bindingIntent, connection, Context.BIND_ABOVE_CLIENT);
     }
+
 
     private class SensitivityChanger implements SeekBar.OnSeekBarChangeListener {
 
@@ -177,7 +181,34 @@ public class MotionDetectionActivity extends Activity{
         }
         finish();
     }
-    
+
+
+    public void chooseapk(View view) {
+
+
+        //aqui borramops el valor que habia y avisamo que lo vuelva a iniciar
+
+        // MY_PREFS_NAME - a static String variable like:
+        //public static final String MY_PREFS_NAME = "MyPrefsFile";
+        SharedPreferences.Editor editor = getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE).edit();
+        editor.putString("apkname", "por elegir");
+        editor.apply();
+
+
+        Toast.makeText(getBaseContext(), "Re-open me and choose apk again!!!", Toast.LENGTH_SHORT).show();
+
+        if(bound){
+            relinquishCamera();
+            Intent watcherIntent = new Intent(MotionDetectionActivity.this, CameraWatcherService.class);
+            stopService(watcherIntent);
+            unbindService(connection);
+            bound = false; // Race Condition was happening.
+        }
+        finish();
+
+    }
+
+
 
     /**
      * {@inheritDoc}
