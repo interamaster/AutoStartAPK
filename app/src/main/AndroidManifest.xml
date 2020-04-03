@@ -33,6 +33,8 @@
                   android:screenOrientation="landscape"
 				  android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
         </activity>
+
+
 		
 		
 		<service android:name="com.jrdv.AutoStartAPK.CameraWatcherService"
