@@ -2,6 +2,7 @@ package com.jrdv.AutoStartAPK;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 
 import android.content.IntentFilter;
@@ -24,6 +25,7 @@ import static android.content.ContentValues.TAG;
 //v02 ya enciendo pantalla e inicia hangout
 //v03 funciona timer ok pero el wlrelase no lo hace bien..
 //v04 menu elgir apk listo,,falta eñgirlo
+//vo5 falta poner timepo desde al activity ajuystes
 
 
 
@@ -39,6 +41,9 @@ public class StartupActivity extends Activity {
     private ApplicationAdapter listadaptor = null;
     private ListView listView;
 
+
+    public static Activity activity = null;
+
     /**
      * {@inheritDoc}
      * @param savedInstanceState
@@ -47,12 +52,11 @@ public class StartupActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.chooseapkactivity);
-        //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        //setSupportActionBar(toolbar);
-        listView = (ListView) findViewById(R.id.list);
-        packageManager = getPackageManager();
-        new LoadApplications().execute();
+
+        activity = this;
+
+
+
 
 
 
@@ -65,6 +69,16 @@ public class StartupActivity extends Activity {
         //2) no habi nada ..creamos uno nuevo
 
         if (nameapkelegida.equals("No name defined") || nameapkelegida.equals("porelegir")) {
+
+
+            setContentView(R.layout.chooseapkactivity);
+            //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+            //setSupportActionBar(toolbar);
+            listView = (ListView) findViewById(R.id.list);
+            packageManager = getPackageManager();
+            new LoadApplications().execute();
+
+
 
             // MY_PREFS_NAME - a static String variable like:
             //public static final String MY_PREFS_NAME = "MyPrefsFile";
@@ -93,6 +107,8 @@ public class StartupActivity extends Activity {
             //TODO poder elgir otra apk aunque ya tengamos una elegida..ya hecho con un boton MotionDetectionActivity
 
 
+            Log.i(TAG, "===========================startup ya se eleigio apk:"+nameapkelegida);
+
         Intent intent = new Intent(StartupActivity.this, CameraWatcherService.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(CameraWatcherService.EXTRA_MESSAGE,"DesdeMain");
@@ -104,6 +120,21 @@ public class StartupActivity extends Activity {
     }
 
 
+
+
+    public static void Yaelegidoapkname(Context context){
+
+
+        Intent intent = new Intent(context, CameraWatcherService.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(CameraWatcherService.EXTRA_MESSAGE,"DesdeMain");
+        context.startService(intent);
+
+        StartupActivity.activity.finish();
+
+
+
+    }
 
     class LoadApplications extends AsyncTask<Void, Void, Void> {
 

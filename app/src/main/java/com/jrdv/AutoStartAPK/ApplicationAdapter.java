@@ -2,16 +2,21 @@ package com.jrdv.AutoStartAPK;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class ApplicationAdapter extends BaseAdapter {
 
@@ -53,8 +58,34 @@ public class ApplicationAdapter extends BaseAdapter {
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent LaunchIntent = packageManager.getLaunchIntentForPackage(applicationInfo.packageName);
-                context.startActivity(LaunchIntent);
+
+
+                //aqui guardamos el valor
+
+                SharedPreferences.Editor editor = context.getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE).edit();
+                editor.putString("apkname", applicationInfo.packageName);
+                editor.apply();
+
+                Log.i("INFO", "================ ==guardado el packagename:"+ applicationInfo.packageName);
+
+
+                Toast.makeText(v.getContext(), "Re-open me and choose apk again!!!", Toast.LENGTH_SHORT).show();
+
+
+                // y salimos de esta activity
+
+                StartupActivity.Yaelegidoapkname(context);
+
+
+
+
+               // Intent LaunchIntent = packageManager.getLaunchIntentForPackage(applicationInfo.packageName);
+                //context.startActivity(LaunchIntent);
+
+
+
+
+
             }
         });
         if (null != applicationInfo) {

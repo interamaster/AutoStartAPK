@@ -17,6 +17,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -110,7 +111,7 @@ public class CameraWatcherService extends Service {
 
         detector = new RgbMotionDetection();
 
-        notifyMessage("DeltaMonitor Running","Touch to Preview Camera");
+        notifyMessage("AutoStartAPK Running","Toca para ajustes!!!");
         
         try{
             super.onCreate();
@@ -133,6 +134,19 @@ public class CameraWatcherService extends Service {
         filter.addAction(Intent.ACTION_SCREEN_OFF);
           mReceiver = new ScreenReceiver();
         registerReceiver(mReceiver, filter);
+
+
+
+
+        //ajustamos sensibilidad
+
+        SharedPreferences prefs = getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE);
+        int valorajuste = prefs.getInt("ajustesensibilidad",  50);//"No name defined" is the default value.
+
+
+        this.detector.setmThreshold(90-valorajuste);
+
+        Log.d("INFO", "sensibilidad ajustada a :"+valorajuste);
 
 
     }
@@ -184,7 +198,11 @@ public class CameraWatcherService extends Service {
 
                 if (!screenOn) {
                     // YOUR CODE
-                    Log.e("PANTALLA ENCENDIDA ", String.valueOf(screenOn));
+
+                    //aumnetamos el numerod e detecciones
+                    numdetecciones++;
+
+                    Log.e("PANTALLA ENCENDIDA !! num detecciones +1:", String.valueOf(numdetecciones));
 
                     // si encendemos pantalla dejamos de monitorizar
                     checkhaygente =false;
@@ -215,7 +233,17 @@ public class CameraWatcherService extends Service {
 
                                 if (numdetecciones>=1){
 
-                                    startRecording();
+                                    //si no esta granbando q grabe:
+
+                                    if (texture!=null) {
+
+                                        Log.i(TAG, "==============================camara ya grabando no reinicio:");
+                                    } else {
+
+
+
+                                        startRecording();
+                                    }
                                 }
 
                                 else {
@@ -227,11 +255,17 @@ public class CameraWatcherService extends Service {
                                    // PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
                                   //  PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
                                        //     | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CHESS");
+                                   //apagamos pantalla
                                     wl.release();
 
+                                    //dejamos grabar
+                                    stopRecording();
+
+                                    //dejamos de chequear people
                                     checkhaygente=false;
 
 
+                                    //anulamos este timer
                                     if (timer != null){
                                          timer.cancel();
                                          timer=null; }
@@ -257,11 +291,13 @@ public class CameraWatcherService extends Service {
                                 }
 
 
+
+
                             }
 
 
                         }
-                    }, 0, tiempoAutocheckpeople);;//TODO timepo del timer en que chequea si hay gente
+                    }, tiempoAutocheckpeople, tiempoAutocheckpeople);;//TODO timepo del timer en que chequea si hay gente
 
 
                 } else {
@@ -280,7 +316,24 @@ public class CameraWatcherService extends Service {
                         timer=null;
                     }
 
-                    startRecording();
+                    if (wl.isHeld()) {
+
+
+                        wl.release();
+
+                    }
+
+
+                    numdetecciones=0;
+
+                    if (texture!=null) {
+
+                        Log.i(TAG, "==============================camara ya grabando no reinicio:");
+                    } else {
+
+
+                        startRecording();
+                    }
 
 
                 }
@@ -294,7 +347,29 @@ public class CameraWatcherService extends Service {
 
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+    public boolean isCameraUsebyApp() {
+        Camera camera = null;
+        try {
+            camera = Camera.open();
+        } catch (RuntimeException e) {
+            return true;
+        } finally {
+            if (camera != null) camera.release();
+        }
+        return false;
+    }
+
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
  @Override
@@ -440,7 +515,7 @@ public class CameraWatcherService extends Service {
                 camera.addCallbackBuffer(buffer);
                 if (!toastPopped) {
                     toastPopped = true;
-                    Toast.makeText(getBaseContext(), "DeltaMonitor is now recording in the background. Changes in the camera's view will wake up camera preview.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getBaseContext(), "Detectando de nuevo!!!!", Toast.LENGTH_SHORT).show();
                 }
             }
         }
@@ -466,8 +541,11 @@ public class CameraWatcherService extends Service {
 
         //lanzamos apk
 
+        SharedPreferences prefs = getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE);
+        String nameapkelegida = prefs.getString("apkname", "No name defined");//"No name defined" is the default value.
 
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage("com.google.android.talk");
+
+        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(nameapkelegida);
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity( launchIntent );
     }
@@ -512,7 +590,9 @@ public class CameraWatcherService extends Service {
                 .setContentText(message);
         
         // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(this, MotionDetectionActivity.class);
+       // Intent resultIntent = new Intent(this, MotionDetectionActivity.class);
+
+        Intent resultIntent = new Intent(this, AjustesNotificacionActivity.class);
 
         // The stack builder object will contain an artificial back stack for the
         // started Activity.

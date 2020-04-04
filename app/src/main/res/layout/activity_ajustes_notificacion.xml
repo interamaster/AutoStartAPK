@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".AjustesNotificacionActivity">
+
+
+    <Button
+            android:text="Stop"
+            android:id="@+id/stop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="stopWatching">
+        </Button>
+        <Button
+            android:layout_centerHorizontal="true"
+            android:text="Choose APK"
+            android:id="@+id/chooseapk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="chooseapk">
+        </Button>
+
+
+
+
+
+    <SeekBar
+        android:layout_below="@id/chooseapk"
+        android:id="@+id/sensitivity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="90"
+        android:paddingTop="22dp"
+        android:paddingLeft="12dp">
+    </SeekBar>
+
+    <TextView
+        android:layout_below="@id/sensitivity"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:text="sensibilidad"
+        android:id="@+id/sensibilidadtext"
+        >
+
+    </TextView>
+
+
+
+    <SeekBar
+        android:layout_below="@id/sensibilidadtext"
+        android:id="@+id/tiemposeekbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="10"
+        android:paddingTop="120dp"
+        android:paddingLeft="12dp">
+    </SeekBar>
+
+    <TextView
+        android:layout_below="@id/tiemposeekbar"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:text="Tiempo"
+        android:id="@+id/timepotext"
+        >
+
+    </TextView>
+
+
+</RelativeLayout>

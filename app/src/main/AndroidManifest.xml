@@ -1,56 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.jrdv.AutoStartAPK"
-      android:versionCode="1"
-      android:versionName="1.0">
+    package="com.jrdv.AutoStartAPK"
+    android:versionCode="1"
+    android:versionName="1.0">
 
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
 
-    
-    <uses-feature android:name="android.hardware.camera"/>
-	<uses-feature android:name="android.hardware.camera.autofocus" />
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-	<uses-permission android:name="android.permission.WAKE_LOCK" />
-	<uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <application
+        android:icon="@drawable/icon"
+        android:label="@string/app_name">
+        <activity android:name=".AjustesNotificacionActivity"></activity>
+        <activity
+            android:name=".StartupActivity"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
-
-
-    <application    android:icon="@drawable/icon" 
-                    android:label="@string/app_name">
-					
-		<activity android:name="com.jrdv.AutoStartAPK.StartupActivity"
-                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
-			<intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-		</activity>
-        
-					
-        <activity android:name="com.jrdv.AutoStartAPK.MotionDetectionActivity"
-                  android:configChanges="keyboardHidden|orientation"
-                  android:screenOrientation="landscape"
-				  android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
         </activity>
+        <activity
+            android:name=".MotionDetectionActivity"
+            android:configChanges="keyboardHidden|orientation"
+            android:screenOrientation="landscape"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"></activity>
 
-
-		
-		
-		<service android:name="com.jrdv.AutoStartAPK.CameraWatcherService"
-				android:exported="true" android:label="@string/app_name" 
-				>
-		   <intent-filter><action android:name=".CameraWatcherService"></action>
-		   </intent-filter>
-		</service>
-
-
-		//para hacerlo auto boot
-		<receiver android:name="com.jrdv.AutoStartAPK.BootCompletedIntentReceiver">
-			<intent-filter>
-				<action android:name="android.intent.action.BOOT_COMPLETED" />
-			</intent-filter>
-		</receiver>
+        <service
+            android:name=".CameraWatcherService"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name=".CameraWatcherService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

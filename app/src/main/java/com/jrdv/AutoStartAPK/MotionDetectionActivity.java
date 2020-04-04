@@ -191,7 +191,7 @@ public class MotionDetectionActivity extends Activity{
         // MY_PREFS_NAME - a static String variable like:
         //public static final String MY_PREFS_NAME = "MyPrefsFile";
         SharedPreferences.Editor editor = getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE).edit();
-        editor.putString("apkname", "por elegir");
+        editor.putString("apkname", "porelegir");
         editor.apply();
 
 
