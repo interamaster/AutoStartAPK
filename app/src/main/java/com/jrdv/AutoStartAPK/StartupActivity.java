@@ -2,6 +2,8 @@ package com.jrdv.AutoStartAPK;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 
@@ -26,6 +28,8 @@ import static android.content.ContentValues.TAG;
 //v03 funciona timer ok pero el wlrelase no lo hace bien..
 //v04 menu elgir apk listo,,falta eñgirlo
 //vo5 falta poner timepo desde al activity ajuystes
+//v09 añadido devoce admin par apagar pantall a lo bruto si falla el wl.release y muchas mas cosas
+
 
 
 
@@ -33,13 +37,20 @@ public class StartupActivity extends Activity {
 
 
     public static final String MY_PREFS_NAME = "MyPrefsFile";
-    private static final String TAG = "MotionDetectionActivity";
+    private static final String TAG = "StartupActivity";
 
 
     private PackageManager packageManager = null;
     private List<ApplicationInfo> applist = null;
     private ApplicationAdapter listadaptor = null;
     private ListView listView;
+
+
+    //para el device manager
+
+    private static final int REQUEST_CODE = 0;
+    private DevicePolicyManager mDPM;
+    private ComponentName mAdminName;
 
 
     public static Activity activity = null;
@@ -117,6 +128,10 @@ public class StartupActivity extends Activity {
         finish();
 
         }
+
+
+
+
     }
 
 
@@ -178,6 +193,6 @@ public class StartupActivity extends Activity {
             super.onPostExecute(aVoid);
         }
     }
-   
-        
+
+
 }

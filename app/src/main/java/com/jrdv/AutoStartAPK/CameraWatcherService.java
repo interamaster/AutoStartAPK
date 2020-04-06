@@ -5,15 +5,21 @@
  */
 package com.jrdv.AutoStartAPK;
 
+import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Service;
 import android.app.TaskStackBuilder;
+import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -78,6 +84,14 @@ public class CameraWatcherService extends Service {
     long tiempoAutocheckpeople=20000;//10 min=60*1000*10
 
 
+    private  SharedPreferences mPrefs;
+
+    //para el device manager
+
+    private static final int REQUEST_CODE = 0;
+    private DevicePolicyManager mDPM;
+    private ComponentName mAdminName;
+
 
     public Camera getCamera() {
 
@@ -140,13 +154,24 @@ public class CameraWatcherService extends Service {
 
         //ajustamos sensibilidad
 
-        SharedPreferences prefs = getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE);
-        int valorajuste = prefs.getInt("ajustesensibilidad",  50);//"No name defined" is the default value.
+        mPrefs = getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE);
+        int valorajuste = mPrefs.getInt("ajustesensibilidad",  50);//"No name defined" is the default value.
 
 
         this.detector.setmThreshold(90-valorajuste);
 
         Log.d("INFO", "sensibilidad ajustada a :"+valorajuste);
+
+
+
+        //chequeamos quiettime
+
+        boolean quiettime = mPrefs.getBoolean("quiettime",  true);//"No name defined" is the default value.
+
+
+
+
+        Log.d("INFO", "quiet time habilitado:"+quiettime);
 
 
     }
@@ -170,6 +195,10 @@ public class CameraWatcherService extends Service {
         Log.d("INFO", "REINICIADO onStartCommand EN SERVICE!!");
 
 
+
+
+
+
         if (intent == null) {
 
             //esto solo debe suceder al removeontask o al destroyed el service!!
@@ -181,13 +210,59 @@ public class CameraWatcherService extends Service {
 
         if (intent != null) {
 
-
             Log.d("INFO", "intent not null  onStartCommand EN SERVICE!!" + intent.getStringExtra(EXTRA_MESSAGE));
+
 
             //1º)sacamos los valores de EXTRA_TIME y EXTRA_MSG
 
             String intentExtra = intent.getStringExtra(EXTRA_MESSAGE);
             Log.v("TASK", "El mensaje recibido en LockService: " + intentExtra);
+
+
+            //2º)chequeamos si es un intent de pantalla
+            if (intentExtra != null && intentExtra.equals("DesdeAjustes")) {
+
+
+                //ajustamos los valores de timepo y sensibilidad
+
+                //ajustamos sensibilidad
+
+                mPrefs= getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE);
+                int valorajuste = mPrefs.getInt("ajustesensibilidad",  50);//"No name defined" is the default value.
+
+
+                this.detector.setmThreshold(90-valorajuste);
+
+                Log.d("INFO", "sensibilidad ajustada a :"+valorajuste);
+
+
+
+                //ajustamos timepo espera
+
+
+                int timepoespera = mPrefs.getInt("ajustetiempo",  20000);//"No name defined" is the default value.
+
+
+                tiempoAutocheckpeople=timepoespera*1000*60;
+
+
+
+                Log.d("INFO", "timepo espera ajustada a :"+tiempoAutocheckpeople);
+
+
+            }
+
+
+
+             if (isInQuietTime()){
+
+                Log.d("INFO", "quiet time no hago nada!!");
+
+
+                 return START_STICKY;
+             }
+
+
 
 
             //2º)chequeamos si es un intent de pantalla
@@ -256,7 +331,10 @@ public class CameraWatcherService extends Service {
                                   //  PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
                                        //     | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CHESS");
                                    //apagamos pantalla
-                                    wl.release();
+
+                                    if (!wl.isHeld()) {
+                                        wl.release();
+                                    }
 
                                     //dejamos grabar
                                     stopRecording();
@@ -272,6 +350,11 @@ public class CameraWatcherService extends Service {
 
 
 
+                                    //*apagamos a lo  bestia
+
+                                    // Initiate DevicePolicyManager.
+                                    mDPM = (DevicePolicyManager)getSystemService(Context.DEVICE_POLICY_SERVICE);
+                                    mDPM.lockNow();
 
 
                                 }
@@ -541,8 +624,8 @@ public class CameraWatcherService extends Service {
 
         //lanzamos apk
 
-        SharedPreferences prefs = getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE);
-        String nameapkelegida = prefs.getString("apkname", "No name defined");//"No name defined" is the default value.
+        mPrefs= getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE);
+        String nameapkelegida = mPrefs.getString("apkname", "No name defined");//"No name defined" is the default value.
 
 
         Intent launchIntent = getPackageManager().getLaunchIntentForPackage(nameapkelegida);
@@ -676,6 +759,46 @@ Constant Value: 4 (0x00000004
         }
     }
 
+
+
+
+
+    private boolean isInQuietTime() {
+        boolean quietTime = false;
+
+        if(mPrefs.getBoolean("quiettime", false)) {
+            // if(Myapplication.preferences.getBoolean(Myapplication.QuietTime, false)) {
+            String startTime =  "22:59";
+            String stopTime =  "08:00";
+
+            //  Log.i("starquiettime: ",startTime);
+            //  Log.i("stopquiettime:  ",stopTime);
+
+            SimpleDateFormat sdfDate = new SimpleDateFormat("H:mm");
+            String currentTimeStamp = sdfDate.format(new Date());
+            int currentHour = Integer.parseInt(currentTimeStamp.split("[:]+")[0]);
+            int currentMinute = Integer.parseInt(currentTimeStamp.split("[:]+")[1]);
+
+            int startHour = Integer.parseInt(startTime.split("[:]+")[0]);
+            int startMinute = Integer.parseInt(startTime.split("[:]+")[1]);
+
+            int stopHour = Integer.parseInt(stopTime.split("[:]+")[0]);
+            int stopMinute = Integer.parseInt(stopTime.split("[:]+")[1]);
+
+            if (startHour < stopHour && currentHour > startHour && currentHour < stopHour) {
+                quietTime = true;
+            } else if (startHour > stopHour && (currentHour > startHour || currentHour < stopHour)) {
+                quietTime = true;
+            } else if (currentHour == startHour && currentMinute >= startMinute) {
+                quietTime = true;
+            } else if (currentHour == stopHour && currentMinute < stopMinute) {
+                quietTime = true;
+            }
+        }
+
+        //  Log.d(TAG,"Device is in quiet time: " + quietTime);
+        return quietTime;
+    }
 
 
 }

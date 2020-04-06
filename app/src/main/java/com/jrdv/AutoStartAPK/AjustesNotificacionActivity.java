@@ -10,9 +10,13 @@ import android.hardware.Camera;
 import android.os.IBinder;
 
 import android.os.Bundle;
+import android.preference.Preference;
+import android.text.InputType;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,6 +36,10 @@ public class AjustesNotificacionActivity extends Activity {
     private int timepoajuste;
     private TextView textotimepo;
 
+    private CheckBox opcionquiettime;
+
+    private  SharedPreferences mPrefs;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,12 +56,12 @@ public class AjustesNotificacionActivity extends Activity {
 //recuperamos valor seekbar
 
 
-        SharedPreferences prefs = getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE);
-        int valorajuste = prefs.getInt("ajustesensibilidad",  50);//"No name defined" is the default value.
+        mPrefs= getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE);
+        int valorajuste = mPrefs.getInt("ajustesensibilidad",  50);//"No name defined" is the default value.
 
         this.sensitivity.setProgress(valorajuste);
 
-        this.textosensibilidad.setText("sensibilidad: "+valorajuste);
+        this.textosensibilidad.setText("sensibilidad a mayor valor mas sensibilidad: "+valorajuste);
 
 
 
@@ -70,12 +78,58 @@ public class AjustesNotificacionActivity extends Activity {
 
 
 
-        int valorajustetimepo = prefs.getInt("ajustetiempo",  5);//"No name defined" is the default value.
+        int valorajustetimepo = mPrefs.getInt("ajustetiempo",  5);//"No name defined" is the default value.
 
         this.tiemporetardo.setProgress(valorajustetimepo);
 
         this.textotimepo.setText("tiempo(minutos): "+valorajustetimepo);
 
+
+
+        //defeinimo el check box
+
+        opcionquiettime = (CheckBox)findViewById(R.id.checktime);
+
+
+
+    }
+
+
+    public void quiettimecheck(View view) {
+
+        SharedPreferences.Editor editor = getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE).edit();
+
+        if(opcionquiettime.isChecked()){
+
+            mPrefs = getSharedPreferences(StartupActivity.MY_PREFS_NAME, MODE_PRIVATE);
+
+            //chequeamos quiettime
+
+            boolean quiettime = mPrefs.getBoolean("quiettime",  true);//"No name defined" is the default value.
+
+
+
+            editor.putBoolean("quiettime",  true);
+            editor.apply();
+
+
+
+            Log.d("INFO", "quiet time habilitado:");
+
+
+
+        }else{
+
+
+
+            editor.putBoolean("quiettime",  false);
+            editor.apply();
+
+
+
+            Log.d("INFO", "quiet time deshabilitado:");
+
+        }
 
 
     }
@@ -87,7 +141,7 @@ public class AjustesNotificacionActivity extends Activity {
         public void onProgressChanged(SeekBar sb, int i, boolean bln) {
             sensibilidadajuste=i;
 
-            textosensibilidad.setText("sensibilidad: "+sensibilidadajuste);
+            textosensibilidad.setText("sensibilidad a mayor valor mas sensibilidad: "+sensibilidadajuste);
 
         }
 
@@ -158,6 +212,14 @@ public class AjustesNotificacionActivity extends Activity {
         editor.apply();
 
 
+        Intent intent = new Intent(AjustesNotificacionActivity.this, CameraWatcherService.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(CameraWatcherService.EXTRA_MESSAGE,"DesdeAjustes");
+        startService(intent);
+
+
+
+
         super.onDestroy();
     }
 
@@ -185,6 +247,11 @@ public class AjustesNotificacionActivity extends Activity {
 
 
     public void stopWatching(View view){
+
+        Intent intent = new Intent(AjustesNotificacionActivity.this, CameraWatcherService.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(CameraWatcherService.EXTRA_MESSAGE,"DesdeAjustes");
+        startService(intent);
 
         finish();
     }

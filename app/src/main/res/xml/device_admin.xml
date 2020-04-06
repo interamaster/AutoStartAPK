@@ -1,0 +1,16 @@
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android" >
+    <uses-policies>
+
+
+
+        <force-lock />
+        <!--  estos mejor no pero asi se que existen   >
+        <wipe-data />
+        <reset-password />
+         <limit-password />
+          <watch-login /-->
+      </uses-policies>
+
+
+
+</device-admin>

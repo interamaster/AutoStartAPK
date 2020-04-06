@@ -11,6 +11,13 @@ android {
 
     }
 
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError false
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -21,7 +28,6 @@ android {
 
 dependencies {
     implementation 'com.android.support:support-v4:21.0.0'
-
     implementation 'com.android.support:appcompat-v7:21.0.3'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+
 }
